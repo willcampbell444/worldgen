@@ -20,7 +20,7 @@ private:
 	float randomDisplacement(int size);
 
 	int _width;
-	std::vector<std::vector<float>> _heightMap;
+	float** _heightMap;
 
 	std::default_random_engine numGenerator;
 	std::uniform_real_distribution<float> randFloats;

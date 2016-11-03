@@ -2,6 +2,7 @@
 
 in vec3 Normal;
 in vec3 FragPos;
+in vec3 Color;
 
 out vec4 outColor;
 
@@ -24,11 +25,8 @@ void main() {
 	vec3 specular = 0.1*pow(max(dot(viewDir, reflectDir), 0), 256)*vec3(1);
 
 	float l = length(cameraPosition-FragPos);
-	float fog = 0;
-	if (l > 95) {
-		l = l - 95;
-		fog = l/5;
-	}
+	l = l-130;
+	float fog = 1-clamp(exp(-l*0.2), 0.0, 1.0);
 
-	outColor = vec4(mix((ambient + diffuse + specular)*color, vec3(16.0f/256.0f, 136.0f/256.0f, 136.0f/256.0f), fog), 1);
+	outColor = vec4(mix((ambient + diffuse + specular)*Color, vec3(16.0f/256.0f, 136.0f/256.0f, 136.0f/256.0f), fog), 1);
 }

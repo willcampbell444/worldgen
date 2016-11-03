@@ -4,7 +4,15 @@ GroundGen::GroundGen(): randFloats(-1, 1) {}
 
 void GroundGen::generate(int w) {
 	_width = w;
-	_heightMap = std::vector<std::vector<float>>(_width, std::vector<float>(_width, 0));
+	_heightMap = new float*[_width];
+	for (int i = 0; i < _width; i++) {
+		_heightMap[i] = new float[_width];
+	}
+
+	_heightMap[0][0] == 0;
+	_heightMap[_width-1][0] == 0;
+	_heightMap[0][_width-1] == 0;
+	_heightMap[_width-1][_width-1] == 0;
 
 	numGenerator.seed(time(NULL));
 	int size = _width/2;
@@ -31,7 +39,7 @@ void GroundGen::diamond(int centerX, int centerZ, int size) {
 	averageHeight += _heightMap[centerX+size][centerZ+size]/4.0f;
 	averageHeight += _heightMap[centerX-size][centerZ+size]/4.0f;
 
-	_heightMap[centerX][centerZ] += averageHeight + randomDisplacement(size);
+	_heightMap[centerX][centerZ] = averageHeight + randomDisplacement(size);
 }
 
 void GroundGen::square(int centerX, int centerZ, int size) {
@@ -41,7 +49,7 @@ void GroundGen::square(int centerX, int centerZ, int size) {
 	averageHeight += _heightMap[loopCoord(centerX)][loopCoord(centerZ+size)]/4.0f;
 	averageHeight += _heightMap[loopCoord(centerX)][loopCoord(centerZ-size)]/4.0f;
 
-	_heightMap[centerX][centerZ] += averageHeight + randomDisplacement(size/1.5f);
+	_heightMap[centerX][centerZ] = averageHeight + randomDisplacement(size/1.5f);
 }
 
 int GroundGen::loopCoord(int x) {
