@@ -8,6 +8,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <shaders.h>
 #include <groundGen.h>
+#include <random>
+#include <string>
 
 class Visualize {
 public:
@@ -23,12 +25,17 @@ private:
     float _targetY = -5;
     int width = 257;
     GLFWwindow* _window;
-    Shaders* _shader;
+    Shaders* _gShader;
+    Shaders* _ssaoShader;
+    Shaders* _blurShader;
+    Shaders* _lightShader;
     Shaders* _waterShader;
 
     GroundGen _ground;
     GLuint _vertexArrayObject;
-    GLuint _waterVAO;
+    GLuint _gBuffer, _ssaoBuffer;
+    GLuint _gPosition, _gNormal, _gColorSpec, _noiseTexture, _ssaoColorBuffer;
+    GLuint _waterVAO, _screenVAO;
 };
 
 #endif

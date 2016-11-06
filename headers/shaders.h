@@ -10,7 +10,7 @@ class Shaders {
 public:
     ~Shaders();
     bool loadShader(GLenum shaderType, const char* filename);
-    void createProgram();
+    bool createProgram();
     void use();
     GLuint getAttributeLocation(const char* name);
     GLuint getUniformLocation(const char* name);

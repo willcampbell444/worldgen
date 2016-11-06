@@ -22,7 +22,7 @@ bool Shaders::loadShader(GLenum shaderType, const char* filename) {
     return status == GL_TRUE;
 }
 
-void Shaders::createProgram() {
+bool Shaders::createProgram() {
     _program = glCreateProgram();
 
     for (GLuint shader: _shaders) {
@@ -31,6 +31,10 @@ void Shaders::createProgram() {
 
     glBindFragDataLocation(_program, 0, "outColor");
     glLinkProgram(_program);
+
+    GLint isLinked;
+    glGetProgramiv(_program, GL_LINK_STATUS, &isLinked);
+    return isLinked == GL_TRUE;
 }
 
 void Shaders::use() {

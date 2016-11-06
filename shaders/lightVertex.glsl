@@ -1,0 +1,11 @@
+#version 150
+
+in vec3 position;
+in vec2 texPos;
+
+out vec2 TexCoord;
+
+void main() {
+	TexCoord = texPos;
+	gl_Position = vec4(position, 1);
+}

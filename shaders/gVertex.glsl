@@ -11,11 +11,10 @@ out vec3 Color;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 model;
-uniform vec3 flip;
 
 void main() {
-	Normal = normal*flip;
+	Normal = vec4(normal, 1.0).xyz; // should have normal matrix
 	Color = color;
-	FragPos = (model * vec4(position*flip, 1.0)).xyz;
-	gl_Position = projection * view * model * vec4(position*flip, 1.0);
+	FragPos = (view * model * vec4(position, 1.0)).xyz;
+	gl_Position = projection * view * model * vec4(position, 1.0);
 }
