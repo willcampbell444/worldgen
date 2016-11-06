@@ -28,7 +28,7 @@ Visualize::Visualize() {
     // glEnable(GL_BLEND);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    _proj = glm::perspective(glm::radians(50.0f), (float)SCR_WIDTH / SCR_HEIGHT, 1.0f, 150.0f);
+    _proj = glm::perspective(glm::radians(50.0f), (float)SCR_WIDTH / SCR_HEIGHT, 1.0f, VIEW_DISTANCE);
     _cameraPos = glm::vec3(width*0.4, 15, width*0.4);
     _view = glm::lookAt(
         _cameraPos,
@@ -68,6 +68,19 @@ Visualize::Visualize() {
     }
     _waterShader->createProgram();
 
+    _blurShader = new Shaders();
+    if (!_blurShader->loadShader(GL_VERTEX_SHADER, "shaders/blurVertex.glsl")) {
+        std::cout << "SSAO Vertex Shader Failed To Compile" << std::endl;
+    }
+    if (!_blurShader->loadShader(GL_FRAGMENT_SHADER, "shaders/blurFragment.glsl")) {
+        std::cout << "SSAO Fragment Shader Failed To Compile" << std::endl;
+    }
+    if (!_blurShader->createProgram()) {
+        std::cout << "SSAO Shader Failed To Link" << std::endl;
+    }
+    _blurShader->use();
+    glUniform1i(_blurShader->getUniformLocation("ssao"), 0);
+
     _ssaoShader = new Shaders();
     if (!_ssaoShader->loadShader(GL_VERTEX_SHADER, "shaders/ssaoVertex.glsl")) {
         std::cout << "SSAO Vertex Shader Failed To Compile" << std::endl;
@@ -79,9 +92,9 @@ Visualize::Visualize() {
         std::cout << "SSAO Shader Failed To Link" << std::endl;
     }
     _ssaoShader->use();
-    glUniform1i(_lightShader->getUniformLocation("gPosition"), 0);
-    glUniform1i(_lightShader->getUniformLocation("gNormal"), 1);
-    glUniform1i(_lightShader->getUniformLocation("texNoise"), 2);
+    glUniform1i(_ssaoShader->getUniformLocation("gPosition"), 0);
+    glUniform1i(_ssaoShader->getUniformLocation("gNormal"), 1);
+    glUniform1i(_ssaoShader->getUniformLocation("texNoise"), 2);
 
     std::uniform_real_distribution<GLfloat> randomFloats(-1, 1);
     std::default_random_engine generator;
@@ -345,6 +358,7 @@ Visualize::Visualize() {
     glGenFramebuffers(1, &_ssaoBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, _ssaoBuffer);
 
+    // ssao framebuffer
     glGenTextures(1, &_ssaoColorBuffer);
     glBindTexture(GL_TEXTURE_2D, _ssaoColorBuffer);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
@@ -353,6 +367,21 @@ Visualize::Visualize() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _ssaoColorBuffer, 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cout << "SSAO buffer is not complete" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // blur framebuffer
+    glGenFramebuffers(1, &_blurBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _blurBuffer);
+
+    glGenTextures(1, &_blurColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, _blurColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _blurColorBuffer, 0);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cout << "Blur buffer is not complete" << std::endl;
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -366,8 +395,20 @@ glm::vec3 Visualize::getColor(float height, float normalY) {
         return glm::vec3(170.0f/256.0f, 163.0f/256.0f, 57.0f/256.0f);
     } else if (height < -5) {
         return glm::vec3(227.0f/256.0f, 215.0f/256.0f, 26.0f/256.0f);
-    } else {
+    } else if (height < 45) {
         return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
+    } else if (height < 65 && normalY > 0.4f) {
+        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
+    } else if (height < 72 && normalY > 0.5f) {
+        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
+    } else if (height < 80 && normalY > 0.6f) {
+        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
+    } else if (height < 85 && normalY > 0.8f) {
+        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
+    } else if (height < 90 && normalY > 0.9f) {
+        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
+    } else {
+        return glm::vec3(0.752941, 0.772549, 0.8078431)/2.0f;
     }
 }
 
@@ -454,16 +495,29 @@ void Visualize::draw() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    // blur
+    glBindFramebuffer(GL_FRAMEBUFFER, _blurBuffer);
+    glClear(GL_COLOR_BUFFER_BIT);
+    _blurShader->use();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _ssaoColorBuffer);
+
+    glBindVertexArray(_screenVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     // apply lighting
     glClearColor(16.0f/256.0f, 136.0f/256.0f, 136.0f/256.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     _lightShader->use();
+    glm::vec3 lightDir = _view * model * glm::vec4(1, -3, 1, 0);
     glUniformMatrix4fv(_lightShader->getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(_view));
     glUniformMatrix4fv(_lightShader->getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(_proj));
-    glUniform3f(_lightShader->getUniformLocation("lightDirection"), -2, -5, 2);
+    glUniform3f(_lightShader->getUniformLocation("lightDirection"), lightDir.x, lightDir.y, lightDir.z);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _ssaoColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, _blurColorBuffer);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _gPosition);
     glActiveTexture(GL_TEXTURE2);

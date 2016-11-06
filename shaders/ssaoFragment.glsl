@@ -16,7 +16,7 @@ const float radius = 1.0;
 
 void main() {
     vec3 fragPos = texture(gPosition, TexCoord).xyz;
-    vec3 normal = texture(gNormal, TexCoord).xyz;
+    vec3 normal = normalize(texture(gNormal, TexCoord).xyz);
     vec3 rand = texture(texNoise, TexCoord*noiseScale).xyz;
 
     vec3 tangent = normalize(rand - normal * dot(rand, normal));

@@ -1,6 +1,6 @@
 #include <groundGen.h>
 
-GroundGen::GroundGen(): randFloats(-1, 1) {}
+GroundGen::GroundGen(): randFloats(-1, 0.8) {}
 
 void GroundGen::generate(int w) {
 	_width = w;

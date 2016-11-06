@@ -11,6 +11,8 @@
 #include <random>
 #include <string>
 
+const float VIEW_DISTANCE = 150.0f;
+
 class Visualize {
 public:
 	Visualize();
@@ -33,8 +35,8 @@ private:
 
     GroundGen _ground;
     GLuint _vertexArrayObject;
-    GLuint _gBuffer, _ssaoBuffer;
-    GLuint _gPosition, _gNormal, _gColorSpec, _noiseTexture, _ssaoColorBuffer;
+    GLuint _gBuffer, _ssaoBuffer, _blurBuffer;
+    GLuint _gPosition, _gNormal, _gColorSpec, _noiseTexture, _ssaoColorBuffer, _blurColorBuffer;
     GLuint _waterVAO, _screenVAO;
 };
 
