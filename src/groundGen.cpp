@@ -1,68 +1,92 @@
 #include <groundGen.h>
 
-GroundGen::GroundGen(): randFloats(-1, 0.8) {}
+GroundGen::GroundGen() {
+	// random list of integers between 0 and 255 inclusive
+	numGenerator.seed(time(NULL));
+
+	for (int i = 0; i < 256; i++) {
+		p[i] = i;
+	}
+	for (int i = 1; i < 255; i++) {
+		std::uniform_int_distribution<int> randFloats(i, 255);
+		int r = randFloats(numGenerator);
+		int chose = p[r];
+		p[r] = p[i];
+		p[i] = chose;
+	}
+	for (int i = 0; i < 256; i++) {
+		p[i + 256] = p[i];
+	}
+
+}
 
 void GroundGen::generate(int w) {
 	_width = w;
 	_heightMap = new float*[_width];
 	for (int i = 0; i < _width; i++) {
 		_heightMap[i] = new float[_width];
-	}
-
-	_heightMap[0][0] == 0;
-	_heightMap[_width-1][0] == 0;
-	_heightMap[0][_width-1] == 0;
-	_heightMap[_width-1][_width-1] == 0;
-
-	numGenerator.seed(time(NULL));
-	int size = _width/2;
-	while (size > 0) {
-		for (int i = size; i < _width; i += size*2) {
-			for (int j = size; j < _width; j += size*2) {
-				diamond(i, j, size);
-			}
+		for (int j = 0; j < _width; j++) {
+			_heightMap[i][j] = HEIGHT_MULT*octPerlin((float)i/TILE_SIZE, (float)j/TILE_SIZE, OCTAVES, PERSISTANCE) + BASE_HEIGHT;
 		}
-		for (int i = 0; i < _width; i += size) {
-			for (int j = (i+size) % (size*2); j <= _width; j += size*2) {
-				square(i, j, size);
-			}
-		}
-
-		size = size/2;
 	}
 }
 
-void GroundGen::diamond(int centerX, int centerZ, int size) {
-	float averageHeight = 0;
-	averageHeight += _heightMap[centerX-size][centerZ-size]/4.0f;
-	averageHeight += _heightMap[centerX+size][centerZ-size]/4.0f;
-	averageHeight += _heightMap[centerX+size][centerZ+size]/4.0f;
-	averageHeight += _heightMap[centerX-size][centerZ+size]/4.0f;
+double GroundGen::octPerlin(double x, double y, int octaves, double persistance) {
+	double total = 0;
+	double frequency = 1;
+	double amplitude = 1;
+	double maxVal = 0;
 
-	_heightMap[centerX][centerZ] = averageHeight + randomDisplacement(size);
-}
-
-void GroundGen::square(int centerX, int centerZ, int size) {
-	float averageHeight = 0;
-	averageHeight += _heightMap[loopCoord(centerX-size)][loopCoord(centerZ)]/4.0f;
-	averageHeight += _heightMap[loopCoord(centerX+size)][loopCoord(centerZ)]/4.0f;
-	averageHeight += _heightMap[loopCoord(centerX)][loopCoord(centerZ+size)]/4.0f;
-	averageHeight += _heightMap[loopCoord(centerX)][loopCoord(centerZ-size)]/4.0f;
-
-	_heightMap[centerX][centerZ] = averageHeight + randomDisplacement(size/1.5f);
-}
-
-int GroundGen::loopCoord(int x) {
-	if (x < 0) {
-		return _width-1+x;
-	} else if (x >= _width) {
-		return x - _width + 1;
+	for (int i = 0; i < octaves; i++) {
+		total += perlin(x*frequency, y*frequency)*amplitude;
+		amplitude = amplitude*persistance;
+		frequency = frequency*2;
+		maxVal += amplitude;
 	}
-	return x;
+
+	return total/maxVal;
 }
 
-float GroundGen::randomDisplacement(int size) {
-	return randFloats(numGenerator)*size;
+double GroundGen::perlin(double x, double y) {
+	int xi = (int)x & 255;
+	int yi = (int)y & 255;
+	double xf = x-(int)x;
+	double yf = y-(int)y;
+
+	double u = fade(xf);
+	double v = fade(yf);
+
+	int aa, ab, ba, bb;
+	aa = p[p[xi] + yi];
+	ab = p[p[xi] + yi + 1];
+	ba = p[p[xi + 1] + yi];
+	bb = p[p[xi + 1] + yi + 1];
+
+	double x1, x2;
+	x1 = lerp(
+		grad(aa, xf, yf),
+		grad(ba, xf - 1, yf),
+		u
+	);
+	x2 = lerp(
+		grad(ab, xf, yf - 1),
+		grad(bb, xf - 1, yf - 1),
+		u
+	);
+
+	return lerp(x1, x2, v);
+}
+
+double GroundGen::grad(int hash, double x, double y) {
+	return ((hash & 1) ? x : -x) + ((hash & 2) ? y : -y);
+}
+
+double GroundGen::fade(double t) {
+	return t*t*t*(t*(t*6 - 15) + 10);
+}
+
+double GroundGen::lerp(double a, double b, double x) {
+	return a + x*(b - a);
 }
 
 float GroundGen::getHeight(int x, int z) {

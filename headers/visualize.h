@@ -25,7 +25,7 @@ private:
     glm::vec3 _cameraPos;
     float _viewAngle = 0;
     float _targetY = -5;
-    int width = 257;
+    int width = 32;
     GLFWwindow* _window;
     Shaders* _gShader;
     Shaders* _ssaoShader;
