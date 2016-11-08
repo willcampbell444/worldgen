@@ -23,13 +23,13 @@ Visualize::Visualize() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
 
     // glEnable(GL_BLEND);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     _proj = glm::perspective(glm::radians(50.0f), (float)SCR_WIDTH / SCR_HEIGHT, 1.0f, VIEW_DISTANCE);
-    _cameraPos = glm::vec3(width*0.4, 15, width*0.4);
+    _cameraPos = glm::vec3(-20, 15, 20);
     _view = glm::lookAt(
         _cameraPos,
         glm::vec3(_cameraPos.x+10*cos(glm::radians(_viewAngle)), _cameraPos.y-5, _cameraPos.z+10*sin(glm::radians(_viewAngle))),
@@ -117,107 +117,6 @@ Visualize::Visualize() {
         glUniform3fv(_ssaoShader->getUniformLocation(("samples[" + std::to_string(i) + "]").c_str()), 1, &kernel[i][0]);
     }
 
-    _ground.generate(width);
-
-    glm::vec3 *verticies = new glm::vec3[2*3*3*2*(width-1)*(width-1)];
-    int count = 0;
-
-    glm::vec3 v1, v2, v3, normal;
-
-    glm::vec3 **normals;
-    normals = new glm::vec3*[width];
-    for (int x = 0; x < width; x++) {
-        normals[x] = new glm::vec3[width];
-        for (int z = 0; z < width; z++) {
-            normals[x][z] = glm::vec3(0, 0, 0);
-        }
-    }
-
-    for (int x = 0; x < width-1; x++) {
-        for (int z = 0; z < width-1; z++) {
-            // triangle 1
-            v1 = glm::vec3(x, _ground.getHeight(x, z), z);
-            v2 = glm::vec3(x, _ground.getHeight(x, z+1), z+1);
-            v3 = glm::vec3(x+1, _ground.getHeight(x+1, z), z);
-            normal = glm::cross(v1, v3);
-            normals[x][z] += normal;
-            normals[x][z+1] += normal;
-            normals[x+1][z] += normal;
-            verticies[count++] = v1;
-            count++;
-            count++;
-            verticies[count++] = v2;
-            count++;
-            count++;
-            verticies[count++] = v3;
-            count++;
-            count++;
-            // triangle 2
-            v1 = glm::vec3(x+1, _ground.getHeight(x+1, z), z);
-            v2 = glm::vec3(x, _ground.getHeight(x, z+1), z+1);
-            v3 = glm::vec3(x+1, _ground.getHeight(x+1, z+1), z+1);
-            normal = glm::cross(v2, v1);
-            normals[x+1][z] += normal;
-            normals[x][z+1] += normal;
-            normals[x+1][z+1] += normal;
-            verticies[count++] = v1;
-            count++;
-            count++;
-            verticies[count++] = v2;
-            count++;
-            count++;
-            verticies[count++] = v3;
-            count++;
-            count++;
-        }
-    }
-
-    count = 0;
-
-    for (int x = 0; x < width-1; x++) {
-        for (int z = 0; z < width-1; z++) {
-            count++;
-            verticies[count++] = glm::normalize(normals[x][z]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
-            count++;
-            verticies[count++] = glm::normalize(normals[x][z+1]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
-            count++;
-            verticies[count++] = glm::normalize(normals[x+1][z]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
-
-            count++;
-            verticies[count++] = glm::normalize(normals[x+1][z]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
-            count++;
-            verticies[count++] = glm::normalize(normals[x][z+1]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
-            count++;
-            verticies[count++] = glm::normalize(normals[x+1][z+1]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
-        }
-    }
-
-    glGenVertexArrays(1, &_vertexArrayObject);
-    glBindVertexArray(_vertexArrayObject);
-
-    GLuint vertexBufferObject;
-    glGenBuffers(1, &vertexBufferObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*3*2*3*3*2*(width-1)*(width-1), verticies, GL_STATIC_DRAW);
-
-    GLuint attrib = _gShader->getAttributeLocation("position");
-    glEnableVertexAttribArray(attrib);
-    glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 9*sizeof(GLfloat), 0);
-
-    attrib = _gShader->getAttributeLocation("normal");
-    glEnableVertexAttribArray(attrib);
-    glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 9*sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
-
-    attrib = _gShader->getAttributeLocation("color");
-    glEnableVertexAttribArray(attrib);
-    glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 9*sizeof(GLfloat), (void*)(6*sizeof(GLfloat)));
-
     float screenVerticies[30] = {
          1,  1, 0, 1, 1,
         -1, -1, 0, 0, 0,
@@ -231,11 +130,12 @@ Visualize::Visualize() {
     glGenVertexArrays(1, &_screenVAO);
     glBindVertexArray(_screenVAO);
 
+    GLuint vertexBufferObject;
     glGenBuffers(1, &vertexBufferObject);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*30, screenVerticies, GL_STATIC_DRAW);
 
-    attrib = _lightShader->getAttributeLocation("position");
+    GLuint attrib = _lightShader->getAttributeLocation("position");
     glEnableVertexAttribArray(attrib);
     glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), 0);
 
@@ -243,60 +143,68 @@ Visualize::Visualize() {
     glEnableVertexAttribArray(attrib);
     glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
 
-    float waterVert[108] = {
-         (float)width,  -12,  (float)width,
-         (float)width,  -12, 0,
-        0,  -12, 0,
-         (float)width,  -12,  (float)width,
-        0,  -12, 0,
-        0,  -12,  (float)width,
+    _gShader->use();
+    for (int x = 0; x < 8; x++) {
+        _chunks.push_back(std::vector<Chunk*>());
+        for (int z = 0; z < 8; z++) {
+            _chunks[x].push_back(new Chunk(x, z, &_ground));
+        }
+    }
 
-         (float)width, -333,  (float)width,
-         (float)width, -333, 0,
-        0, -333, 0,
-         (float)width, -333,  (float)width,
-        0, -333, 0,
-        0, -333,  (float)width,
+    // float waterVert[108] = {
+    //      (float)width,  -12,  (float)width,
+    //      (float)width,  -12, 0,
+    //     0,  -12, 0,
+    //      (float)width,  -12,  (float)width,
+    //     0,  -12, 0,
+    //     0,  -12,  (float)width,
 
-         (float)width,  -12,  (float)width,
-         (float)width, -333,  (float)width,
-        0, -333,  (float)width,
-         (float)width,  -12,  (float)width,
-        0, -333,  (float)width,
-        0,  -12,  (float)width,
+    //      (float)width, -333,  (float)width,
+    //      (float)width, -333, 0,
+    //     0, -333, 0,
+    //      (float)width, -333,  (float)width,
+    //     0, -333, 0,
+    //     0, -333,  (float)width,
 
-         (float)width,  -12, 0,
-         (float)width, -333, 0,
-        0, -333, 0,
-         (float)width,  -12, 0,
-        0, -333, 0,
-        0,  -12, 0,
+    //      (float)width,  -12,  (float)width,
+    //      (float)width, -333,  (float)width,
+    //     0, -333,  (float)width,
+    //      (float)width,  -12,  (float)width,
+    //     0, -333,  (float)width,
+    //     0,  -12,  (float)width,
 
-         (float)width,  -12,  (float)width,
-         (float)width, -333,  (float)width,
-         (float)width, -333, 0,
-         (float)width,  -12,  (float)width,
-         (float)width, -333, 0,
-         (float)width,  -12, 0,
+    //      (float)width,  -12, 0,
+    //      (float)width, -333, 0,
+    //     0, -333, 0,
+    //      (float)width,  -12, 0,
+    //     0, -333, 0,
+    //     0,  -12, 0,
 
-        0,  -12,  (float)width,
-        0, -333,  (float)width,
-        0, -333, 0,
-        0,  -12,  (float)width,
-        0, -333, 0,
-        0,  -12, 0,
-    };
+    //      (float)width,  -12,  (float)width,
+    //      (float)width, -333,  (float)width,
+    //      (float)width, -333, 0,
+    //      (float)width,  -12,  (float)width,
+    //      (float)width, -333, 0,
+    //      (float)width,  -12, 0,
 
-    glGenVertexArrays(1, &_waterVAO);
-    glBindVertexArray(_waterVAO);
+    //     0,  -12,  (float)width,
+    //     0, -333,  (float)width,
+    //     0, -333, 0,
+    //     0,  -12,  (float)width,
+    //     0, -333, 0,
+    //     0,  -12, 0,
+    // };
 
-    glGenBuffers(1, &vertexBufferObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*108, waterVert, GL_STATIC_DRAW);
+    // glGenVertexArrays(1, &_waterVAO);
+    // glBindVertexArray(_waterVAO);
 
-    attrib = _waterShader->getAttributeLocation("position");
-    glEnableVertexAttribArray(attrib);
-    glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
+    // glGenBuffers(1, &vertexBufferObject);
+    // glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*108, waterVert, GL_STATIC_DRAW);
+
+    // attrib = _waterShader->getAttributeLocation("position");
+    // glEnableVertexAttribArray(attrib);
+    // glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
 
     // Create G-buffer
     glGenFramebuffers(1, &_gBuffer);
@@ -384,32 +292,6 @@ Visualize::Visualize() {
         std::cout << "Blur buffer is not complete" << std::endl;
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    delete[] verticies;
-}
-
-glm::vec3 Visualize::getColor(float height, float normalY) {
-    if (height < -10) {
-        return glm::vec3(113.0f/256.0f, 110.0f/256.0f, 62.0f/256.0f);
-    } else if (height < -8) {
-        return glm::vec3(170.0f/256.0f, 163.0f/256.0f, 57.0f/256.0f);
-    } else if (height < -5) {
-        return glm::vec3(227.0f/256.0f, 215.0f/256.0f, 26.0f/256.0f);
-    } else if (height < 45) {
-        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 65 && normalY > 0.4f) {
-        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 72 && normalY > 0.5f) {
-        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 80 && normalY > 0.6f) {
-        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 85 && normalY > 0.8f) {
-        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 90 && normalY > 0.9f) {
-        return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else {
-        return glm::vec3(0.752941, 0.772549, 0.8078431)/2.0f;
-    }
 }
 
 GLFWwindow* Visualize::getWindow() {
@@ -469,14 +351,16 @@ void Visualize::draw() {
     _gShader->use();
     glUniformMatrix4fv(_gShader->getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(_view));
     glUniformMatrix4fv(_gShader->getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(_proj));
+    glm::mat4 model;
 
-    glm::mat4 model = glm::scale(glm::mat4(1), glm::vec3(0.6, 0.6, 0.6));
-    glUniformMatrix4fv(_gShader->getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
-
-    glBindVertexArray(_vertexArrayObject);
-
-    glDrawArrays(GL_TRIANGLES, 0, 2*3*(width-1)*(width-1));
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    for (int x = 0; x < _chunks.size(); x++) {
+        for (int z = 0; z < _chunks[x].size(); z++) {
+            model = glm::translate(glm::mat4(1), glm::vec3((CHUNK_WIDTH - 1)*x, 0, (CHUNK_WIDTH - 1)*z));
+            glUniformMatrix4fv(_gShader->getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
+        
+            _chunks[x][z]->draw();
+        }
+    }
 
     // ssao
     glBindFramebuffer(GL_FRAMEBUFFER, _ssaoBuffer);

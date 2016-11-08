@@ -39,4 +39,5 @@ void main() {
 	float fog = 1-clamp(exp(-l*0.2), 0.0, 1.0);
 
 	outColor = vec4(mix((ambient + diffuse + specular)*color, vec3(16.0f/256.0f, 136.0f/256.0f, 136.0f/256.0f), fog), 1);
+	// outColor = vec4(mix(norm, vec3(16.0f/256.0f, 136.0f/256.0f, 136.0f/256.0f), fog), 1);
 }

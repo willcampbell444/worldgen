@@ -21,14 +21,14 @@ GroundGen::GroundGen() {
 }
 
 void GroundGen::generate(int w) {
-	_width = w;
-	_heightMap = new float*[_width];
-	for (int i = 0; i < _width; i++) {
-		_heightMap[i] = new float[_width];
-		for (int j = 0; j < _width; j++) {
-			_heightMap[i][j] = HEIGHT_MULT*octPerlin((float)i/TILE_SIZE, (float)j/TILE_SIZE, OCTAVES, PERSISTANCE) + BASE_HEIGHT;
-		}
-	}
+	// _width = w;
+	// _heightMap = new float*[_width];
+	// for (int i = 0; i < _width; i++) {
+	// 	_heightMap[i] = new float[_width];
+	// 	for (int j = 0; j < _width; j++) {
+	// 		_heightMap[i][j] = HEIGHT_MULT*octPerlin((float)i/TILE_SIZE, (float)j/TILE_SIZE, OCTAVES, PERSISTANCE) + BASE_HEIGHT;
+	// 	}
+	// }
 }
 
 double GroundGen::octPerlin(double x, double y, int octaves, double persistance) {
@@ -90,5 +90,5 @@ double GroundGen::lerp(double a, double b, double x) {
 }
 
 float GroundGen::getHeight(int x, int z) {
-	return _heightMap[x][z];
+	return HEIGHT_MULT*octPerlin((float)x/TILE_SIZE, (float)z/TILE_SIZE, OCTAVES, PERSISTANCE) + BASE_HEIGHT;
 }

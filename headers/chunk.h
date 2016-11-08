@@ -6,19 +6,19 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+#include <shaders.h>
 
-const int CHUNK_WIDTH = 16;
+const int CHUNK_WIDTH = 32;
 
 class Chunk {
 public:
-	Chunk(int x, int y, float*** adjacent, GroundGen generator);
+	Chunk(int x, int y, GroundGen* generator);
 	~Chunk();
 	void draw();
-	float* getHeightMap();
 private:
-	float** _heightMap;
-
-	GLuint _VAO;
+	glm::vec3 getColor(float height, float normalY);
+	GLuint _VAO, _VBO;
 };
 
 #endif

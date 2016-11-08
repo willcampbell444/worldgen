@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <shaders.h>
 #include <groundGen.h>
+#include <chunk.h>
 #include <random>
 #include <string>
 
@@ -20,12 +21,11 @@ public:
 	void update();
 	GLFWwindow* getWindow();
 private:
-	glm::vec3 getColor(float height, float normalY);
+    std::vector<std::vector<Chunk*>> _chunks;
 	glm::mat4 _proj, _view;
     glm::vec3 _cameraPos;
     float _viewAngle = 0;
     float _targetY = -5;
-    int width = 32;
     GLFWwindow* _window;
     Shaders* _gShader;
     Shaders* _ssaoShader;

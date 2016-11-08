@@ -7,7 +7,7 @@
 #include <ctime>
 
 const float HEIGHT_MULT = 120.0f;
-const float BASE_HEIGHT = 20.0f;
+const float BASE_HEIGHT = 80.0f;
 const float TILE_SIZE   = 512.0f;
 const int   OCTAVES     = 16;
 const float PERSISTANCE = 0.55f;
