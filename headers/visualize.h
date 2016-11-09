@@ -12,7 +12,8 @@
 #include <random>
 #include <string>
 
-const float VIEW_DISTANCE = 150.0f;
+const float VIEW_DISTANCE = 200.0f;
+const int GRID_WIDTH = 11;
 
 class Visualize {
 public:
@@ -23,9 +24,11 @@ public:
 private:
     std::vector<std::vector<Chunk*>> _chunks;
 	glm::mat4 _proj, _view;
+    glm::vec2 _cameraChunk;
     glm::vec3 _cameraPos;
     float _viewAngle = 0;
     float _targetY = -5;
+    float _lastTime;
     GLFWwindow* _window;
     Shaders* _gShader;
     Shaders* _ssaoShader;

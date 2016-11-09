@@ -29,7 +29,7 @@ Visualize::Visualize() {
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     _proj = glm::perspective(glm::radians(50.0f), (float)SCR_WIDTH / SCR_HEIGHT, 1.0f, VIEW_DISTANCE);
-    _cameraPos = glm::vec3(-20, 15, 20);
+    _cameraPos = glm::vec3(CHUNK_WIDTH/2.0f, 80, CHUNK_WIDTH/2.0f);
     _view = glm::lookAt(
         _cameraPos,
         glm::vec3(_cameraPos.x+10*cos(glm::radians(_viewAngle)), _cameraPos.y-5, _cameraPos.z+10*sin(glm::radians(_viewAngle))),
@@ -143,11 +143,12 @@ Visualize::Visualize() {
     glEnableVertexAttribArray(attrib);
     glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
 
+    _cameraChunk = glm::vec2(0, 0);
     _gShader->use();
-    for (int x = 0; x < 8; x++) {
+    for (int x = -GRID_WIDTH/2; x <= GRID_WIDTH/2; x++) {
         _chunks.push_back(std::vector<Chunk*>());
-        for (int z = 0; z < 8; z++) {
-            _chunks[x].push_back(new Chunk(x, z, &_ground));
+        for (int z = -GRID_WIDTH/2; z <= GRID_WIDTH/2; z++) {
+            _chunks.back().push_back(new Chunk(x, z, &_ground));
         }
     }
 
@@ -292,6 +293,8 @@ Visualize::Visualize() {
         std::cout << "Blur buffer is not complete" << std::endl;
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    _lastTime = glfwGetTime();
 }
 
 GLFWwindow* Visualize::getWindow() {
@@ -299,41 +302,107 @@ GLFWwindow* Visualize::getWindow() {
 }
 
 void Visualize::update() {
+    float deltaTime = glfwGetTime() - _lastTime;
+    _lastTime = glfwGetTime();
+
     glfwPollEvents();
 
     if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS) {
-        _cameraPos.z += 1*sin(glm::radians(_viewAngle-90));
-        _cameraPos.x += 1*cos(glm::radians(_viewAngle-90));
+        _cameraPos.z += 40*sin(glm::radians(_viewAngle-90)) * deltaTime;
+        _cameraPos.x += 40*cos(glm::radians(_viewAngle-90)) * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS) {
-        _cameraPos.z -= 1*sin(glm::radians(_viewAngle-90));
-        _cameraPos.x -= 1*cos(glm::radians(_viewAngle-90));
+        _cameraPos.z -= 40*sin(glm::radians(_viewAngle-90)) * deltaTime;
+        _cameraPos.x -= 40*cos(glm::radians(_viewAngle-90)) * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS) {
-        _cameraPos.z += 1*sin(glm::radians(_viewAngle));
-        _cameraPos.x += 1*cos(glm::radians(_viewAngle));
+        _cameraPos.z += 40*sin(glm::radians(_viewAngle)) * deltaTime;
+        _cameraPos.x += 40*cos(glm::radians(_viewAngle)) * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS) {
-        _cameraPos.z -= 1*sin(glm::radians(_viewAngle));
-        _cameraPos.x -= 1*cos(glm::radians(_viewAngle));
+        _cameraPos.z -= 40*sin(glm::radians(_viewAngle)) * deltaTime;
+        _cameraPos.x -= 40*cos(glm::radians(_viewAngle)) * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_UP) == GLFW_PRESS) {
-        _cameraPos.y += 1;
+        _cameraPos.y += 40 * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        _cameraPos.y -= 1;
+        _cameraPos.y -= 40 * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_R) == GLFW_PRESS) {
-        _targetY += 0.1;
+        _targetY += 8 * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_F) == GLFW_PRESS) {
-        _targetY -= 0.1;
+        _targetY -= 8 * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_E) == GLFW_PRESS) {
-        _viewAngle += 2;
+        _viewAngle += 80 * deltaTime;
     }
     if (glfwGetKey(_window, GLFW_KEY_Q) == GLFW_PRESS) {
-        _viewAngle -= 2;
+        _viewAngle -= 80 * deltaTime;
+    }
+
+    if (_cameraPos.x < 0) {
+        _cameraPos.x = CHUNK_WIDTH;
+        _cameraChunk.x -= 1;
+
+        for (int z = 0; z < GRID_WIDTH; z++) {
+            delete _chunks.back()[z];
+        }
+        for (int x = GRID_WIDTH-2; x >= 0; x--) {
+            for (int z = 0; z < GRID_WIDTH; z++) {
+                _chunks[x + 1][z] = _chunks[x][z];
+            }
+        }
+        for (int z = 0; z < GRID_WIDTH; z++) {
+            _chunks[0][z] = new Chunk(_cameraChunk.x - GRID_WIDTH/2, _cameraChunk.y + z - GRID_WIDTH/2, &_ground);
+        }
+    } else if (_cameraPos.x > CHUNK_WIDTH) {
+        _cameraPos.x = 0;
+        _cameraChunk.x += 1;
+        for (int z = 0; z < GRID_WIDTH; z++) {
+            delete _chunks[0][z];
+        }
+        for (int x = 1; x < GRID_WIDTH; x++) {
+            for (int z = 0; z < GRID_WIDTH; z++) {
+                _chunks[x - 1][z] = _chunks[x][z];
+            }
+        }
+        for (int z = 0; z < GRID_WIDTH; z++) {
+            _chunks.back()[z] = new Chunk(_cameraChunk.x + GRID_WIDTH/2, _cameraChunk.y + z - GRID_WIDTH/2, &_ground);
+        }
+    }
+
+    if (_cameraPos.z < 0) {
+        _cameraPos.z = CHUNK_WIDTH;
+        _cameraChunk.y -= 1;
+
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            delete _chunks[x].back();
+        }
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            for (int z = GRID_WIDTH-2; z >= 0; z--) {
+                _chunks[x][z + 1] = _chunks[x][z];
+            }
+        }
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            _chunks[x][0] = new Chunk(_cameraChunk.x + x - GRID_WIDTH/2, _cameraChunk.y - GRID_WIDTH/2, &_ground);
+        }
+    } else if (_cameraPos.z > CHUNK_WIDTH) {
+        _cameraPos.z = 0;
+        _cameraChunk.y += 1;
+
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            delete _chunks[x][0];
+        }
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            for (int z = 1; z < GRID_WIDTH; z++) {
+                _chunks[x][z - 1] = _chunks[x][z];
+            }
+        }
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            _chunks[x].back() = new Chunk(_cameraChunk.x + x - GRID_WIDTH/2, _cameraChunk.y + GRID_WIDTH/2, &_ground);
+        }
     }
 
     _view = glm::lookAt(
@@ -355,7 +424,7 @@ void Visualize::draw() {
 
     for (int x = 0; x < _chunks.size(); x++) {
         for (int z = 0; z < _chunks[x].size(); z++) {
-            model = glm::translate(glm::mat4(1), glm::vec3((CHUNK_WIDTH - 1)*x, 0, (CHUNK_WIDTH - 1)*z));
+            model = glm::translate(glm::mat4(1), glm::vec3((CHUNK_WIDTH - 1)*(x - GRID_WIDTH/2), 0, (CHUNK_WIDTH - 1)*(z - GRID_WIDTH/2)));
             glUniformMatrix4fv(_gShader->getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
         
             _chunks[x][z]->draw();

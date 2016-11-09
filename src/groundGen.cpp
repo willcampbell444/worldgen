@@ -48,10 +48,10 @@ double GroundGen::octPerlin(double x, double y, int octaves, double persistance)
 }
 
 double GroundGen::perlin(double x, double y) {
-	int xi = (int)x & 255;
-	int yi = (int)y & 255;
-	double xf = x-(int)x;
-	double yf = y-(int)y;
+	int xi = (int)floor(x) & 255;
+	int yi = (int)floor(y) & 255;
+	double xf = x-floor(x);
+	double yf = y-floor(y);
 
 	double u = fade(xf);
 	double v = fade(yf);

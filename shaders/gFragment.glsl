@@ -9,7 +9,7 @@ in vec3 FragPos;
 in vec3 Color;
 
 const float NEAR = 1;
-const float FAR = 150;
+const float FAR = 200;
 
 void main() {
 	gPosition.rgb = FragPos;

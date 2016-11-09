@@ -35,7 +35,7 @@ void main() {
 	vec3 specular = specularStrength*pow(max(dot(normalize(-pos), reflectDir), 0), 16)*vec3(1);
 
 	float l = length(pos);
-	l = l-130;
+	l = l-180;
 	float fog = 1-clamp(exp(-l*0.2), 0.0, 1.0);
 
 	outColor = vec4(mix((ambient + diffuse + specular)*color, vec3(16.0f/256.0f, 136.0f/256.0f, 136.0f/256.0f), fog), 1);
