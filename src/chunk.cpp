@@ -191,20 +191,26 @@ Chunk::Chunk(int chunkX, int chunkY, GroundGen *generator) {
 }
 
 glm::vec3 Chunk::getColor(float height, float normalY) {
-    if (height < -10) {
+    if (height < -5) {
         return glm::vec3(113.0f/256.0f, 110.0f/256.0f, 62.0f/256.0f);
-    } else if (height < -8) {
+    } else if (height < -2) {
         return glm::vec3(170.0f/256.0f, 163.0f/256.0f, 57.0f/256.0f);
-    } else if (height < -5) {
+    } else if (height < 1) {
         return glm::vec3(227.0f/256.0f, 215.0f/256.0f, 26.0f/256.0f);
-    } else if (height < 80) {
+    } else if (height <= 10 && normalY > (height/10.0f)*(height/10.0f) + 0.6f) {
+        return glm::vec3(227.0f/256.0f, 215.0f/256.0f, 26.0f/256.0f);
+    } else if (height < 35) {
         return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 100 && normalY > 0.5f) {
+    } else if (height < 50 && normalY > 0.5f) {
         return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 110 && normalY > 0.75f) {
+    } else if (height < 65 && normalY > 0.75f) {
         return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
-    } else if (height < 120 && normalY > 0.9f) {
+    } else if (height < 75 && normalY > 0.9f) {
         return glm::vec3(45.0f/256.0f, 136.0f/256.0f, 45.0f/256.0f);
+    } else if (height > 90 && normalY > 0.85f) {
+        return glm::vec3(1, 1, 1);
+    } else if (height > 100) {
+        return glm::vec3(1, 1, 1);
     } else {
         return glm::vec3(0.752941, 0.772549, 0.8078431)/2.0f;
     }

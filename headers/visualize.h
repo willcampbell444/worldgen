@@ -13,7 +13,7 @@
 #include <string>
 
 const float VIEW_DISTANCE = 200.0f;
-const int GRID_WIDTH = 11;
+const int GRID_WIDTH = 13;
 
 class Visualize {
 public:

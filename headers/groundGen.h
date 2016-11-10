@@ -7,9 +7,9 @@
 #include <math.h>
 #include <ctime>
 
-const float HEIGHT_MULT = 150.0f;
-const float BASE_HEIGHT = 80.0f;
-const float TILE_SIZE   = 512.0f;
+const float HEIGHT_MULT = 80.0f;
+const float BASE_HEIGHT = 30.0f;
+const float TILE_SIZE   = 256.0f;
 const int   OCTAVES     = 7;
 const float PERSISTANCE = 0.5f;
 

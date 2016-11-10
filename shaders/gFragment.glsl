@@ -16,5 +16,5 @@ void main() {
 	float z = gl_FragCoord.z*2 - 1;
 	gPosition.a = (2*NEAR*FAR) / (FAR + NEAR - z*(FAR-NEAR));
 	gNormal = Normal;
-	gColor = vec4(Color, 0.2);
+	gColor = vec4(Color, 0.5);
 }

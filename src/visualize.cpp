@@ -26,7 +26,7 @@ Visualize::Visualize() {
     // glEnable(GL_CULL_FACE);
 
     // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     _proj = glm::perspective(glm::radians(50.0f), (float)SCR_WIDTH / SCR_HEIGHT, 1.0f, VIEW_DISTANCE);
     _cameraPos = glm::vec3(CHUNK_WIDTH/2.0f, 80, CHUNK_WIDTH/2.0f);
@@ -152,60 +152,26 @@ Visualize::Visualize() {
         }
     }
 
-    // float waterVert[108] = {
-    //      (float)width,  -12,  (float)width,
-    //      (float)width,  -12, 0,
-    //     0,  -12, 0,
-    //      (float)width,  -12,  (float)width,
-    //     0,  -12, 0,
-    //     0,  -12,  (float)width,
+    float width = (GRID_WIDTH * CHUNK_WIDTH)/2.0f;
+    float waterVert[18] = {
+        width,  0, width,
+        width,  0, -width,
+        -width,  0, -width,
+        width,  0, width,
+        -width,  0, -width,
+        -width,  0, width,
+    };
 
-    //      (float)width, -333,  (float)width,
-    //      (float)width, -333, 0,
-    //     0, -333, 0,
-    //      (float)width, -333,  (float)width,
-    //     0, -333, 0,
-    //     0, -333,  (float)width,
+    glGenVertexArrays(1, &_waterVAO);
+    glBindVertexArray(_waterVAO);
 
-    //      (float)width,  -12,  (float)width,
-    //      (float)width, -333,  (float)width,
-    //     0, -333,  (float)width,
-    //      (float)width,  -12,  (float)width,
-    //     0, -333,  (float)width,
-    //     0,  -12,  (float)width,
+    glGenBuffers(1, &vertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*18, waterVert, GL_STATIC_DRAW);
 
-    //      (float)width,  -12, 0,
-    //      (float)width, -333, 0,
-    //     0, -333, 0,
-    //      (float)width,  -12, 0,
-    //     0, -333, 0,
-    //     0,  -12, 0,
-
-    //      (float)width,  -12,  (float)width,
-    //      (float)width, -333,  (float)width,
-    //      (float)width, -333, 0,
-    //      (float)width,  -12,  (float)width,
-    //      (float)width, -333, 0,
-    //      (float)width,  -12, 0,
-
-    //     0,  -12,  (float)width,
-    //     0, -333,  (float)width,
-    //     0, -333, 0,
-    //     0,  -12,  (float)width,
-    //     0, -333, 0,
-    //     0,  -12, 0,
-    // };
-
-    // glGenVertexArrays(1, &_waterVAO);
-    // glBindVertexArray(_waterVAO);
-
-    // glGenBuffers(1, &vertexBufferObject);
-    // glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*108, waterVert, GL_STATIC_DRAW);
-
-    // attrib = _waterShader->getAttributeLocation("position");
-    // glEnableVertexAttribArray(attrib);
-    // glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
+    attrib = _waterShader->getAttributeLocation("position");
+    glEnableVertexAttribArray(attrib);
+    glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), 0);
 
     // Create G-buffer
     glGenFramebuffers(1, &_gBuffer);
@@ -481,13 +447,23 @@ void Visualize::draw() {
     glBindVertexArray(_screenVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, _gBuffer);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // Write to default framebuffer
+    glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     // draw the water
-    // _waterShader->use();
-    // glUniformMatrix4fv(_waterShader->getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
-    // glUniformMatrix4fv(_waterShader->getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(_view));
-    // glUniformMatrix4fv(_waterShader->getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(_proj));
-    // glBindVertexArray(_waterVAO);
-    // glDrawArrays(GL_TRIANGLES, 0, 108);
+    glEnable(GL_BLEND);
+    _waterShader->use();
+    glUniformMatrix4fv(_waterShader->getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(_proj));
+    glUniformMatrix4fv(_waterShader->getUniformLocation("view"), 1, GL_FALSE, glm::value_ptr(_view));
+    for (int h = -10; h <= 0; h += 2) {
+        model = glm::translate(glm::mat4(1), glm::vec3(0, h, 0));
+        glUniformMatrix4fv(_waterShader->getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
+        glBindVertexArray(_waterVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 18);
+    }
+    glDisable(GL_BLEND);
 
     glfwSwapBuffers(_window);
 }
