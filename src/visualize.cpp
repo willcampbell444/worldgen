@@ -23,7 +23,7 @@ Visualize::Visualize() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     // glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -80,6 +80,19 @@ Visualize::Visualize() {
     }
     _blurShader->use();
     glUniform1i(_blurShader->getUniformLocation("ssao"), 0);
+
+    _vignetteShader = new Shaders();
+    if (!_vignetteShader->loadShader(GL_VERTEX_SHADER, "shaders/vignetteVertex.glsl")) {
+        std::cout << "Vignette Vertex Shader Failed To Compile" << std::endl;
+    }
+    if (!_vignetteShader->loadShader(GL_FRAGMENT_SHADER, "shaders/vignetteFragment.glsl")) {
+        std::cout << "Vignette Fragment Shader Failed To Compile" << std::endl;
+    }
+    if (!_vignetteShader->createProgram()) {
+        std::cout << "Vignette Shader Failed To Link" << std::endl;
+    }
+    _vignetteShader->use();
+    glUniform1i(_vignetteShader->getUniformLocation("screen"), 0);
 
     _ssaoShader = new Shaders();
     if (!_ssaoShader->loadShader(GL_VERTEX_SHADER, "shaders/ssaoVertex.glsl")) {
@@ -260,6 +273,27 @@ Visualize::Visualize() {
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    // screen framebuffer
+    glGenFramebuffers(1, &_screenBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _screenBuffer);
+
+    glGenTextures(1, &_screenColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, _screenColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _screenColorBuffer, 0);
+
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cout << "Screen buffer is not complete" << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     _lastTime = glfwGetTime();
 }
 
@@ -399,7 +433,7 @@ void Visualize::draw() {
 
     // ssao
     glBindFramebuffer(GL_FRAMEBUFFER, _ssaoBuffer);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     _ssaoShader->use();
     glUniformMatrix4fv(_ssaoShader->getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(_proj));
 
@@ -416,7 +450,7 @@ void Visualize::draw() {
 
     // blur
     glBindFramebuffer(GL_FRAMEBUFFER, _blurBuffer);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     _blurShader->use();
 
     glActiveTexture(GL_TEXTURE0);
@@ -424,7 +458,8 @@ void Visualize::draw() {
 
     glBindVertexArray(_screenVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _screenBuffer);
 
     // apply lighting
     glClearColor(16.0f/256.0f, 136.0f/256.0f, 136.0f/256.0f, 1.0f);
@@ -447,10 +482,12 @@ void Visualize::draw() {
     glBindVertexArray(_screenVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
+    // Copy geometry pass's depth buffer
     glBindFramebuffer(GL_READ_FRAMEBUFFER, _gBuffer);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // Write to default framebuffer
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _screenBuffer); 
     glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, _screenBuffer);
 
     // draw the water
     glEnable(GL_BLEND);
@@ -464,6 +501,16 @@ void Visualize::draw() {
         glDrawArrays(GL_TRIANGLES, 0, 18);
     }
     glDisable(GL_BLEND);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    _vignetteShader->use();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _screenColorBuffer);
+
+    glBindVertexArray(_screenVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glfwSwapBuffers(_window);
 }

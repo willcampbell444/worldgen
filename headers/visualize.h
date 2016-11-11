@@ -35,11 +35,11 @@ private:
     Shaders* _blurShader;
     Shaders* _lightShader;
     Shaders* _waterShader;
+    Shaders* _vignetteShader;
 
     GroundGen _ground;
-    GLuint _vertexArrayObject;
-    GLuint _gBuffer, _ssaoBuffer, _blurBuffer;
-    GLuint _gPosition, _gNormal, _gColorSpec, _noiseTexture, _ssaoColorBuffer, _blurColorBuffer;
+    GLuint _gBuffer, _ssaoBuffer, _blurBuffer, _screenBuffer;
+    GLuint _gPosition, _gNormal, _gColorSpec, _noiseTexture, _ssaoColorBuffer, _blurColorBuffer, _screenColorBuffer;
     GLuint _waterVAO, _screenVAO;
 };
 

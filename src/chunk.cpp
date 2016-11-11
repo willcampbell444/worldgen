@@ -140,28 +140,61 @@ Chunk::Chunk(int chunkX, int chunkY, GroundGen *generator) {
 
     count = 0;
 
+    glm::vec3 color;
     for (int x = 0; x < CHUNK_WIDTH-1; x++) {
         for (int z = 0; z < CHUNK_WIDTH-1; z++) {
+            color = getColor(
+                (verticies[count].y + verticies[count+3].y + verticies[count+6].y)/3.0f,
+                glm::normalize(normals[x][z] + normals[x][z+1] + normals[x+1][z]).y
+            );
             count++;
             verticies[count++] = glm::normalize(normals[x][z]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+            verticies[count++] = color;
             count++;
             verticies[count++] = glm::normalize(normals[x][z+1]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+            verticies[count++] = color;
             count++;
             verticies[count++] = glm::normalize(normals[x+1][z]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+            verticies[count++] = color;
+
+            color = getColor(
+                (verticies[count].y + verticies[count+3].y + verticies[count+6].y)/3.0f,
+                glm::normalize(normals[x+1][z] + normals[x][z+1] + normals[x+1][z+1]).y
+            );
             count++;
             verticies[count++] = glm::normalize(normals[x+1][z]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+            verticies[count++] = color;
             count++;
             verticies[count++] = glm::normalize(normals[x][z+1]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+            verticies[count++] = color;
             count++;
             verticies[count++] = glm::normalize(normals[x+1][z+1]);
-            verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+            verticies[count++] = color;
         }
     }
+    // SMOOTH COLORS
+    // for (int x = 0; x < CHUNK_WIDTH-1; x++) {
+    //     for (int z = 0; z < CHUNK_WIDTH-1; z++) {
+    //         count++;
+    //         verticies[count++] = glm::normalize(normals[x][z]);
+    //         verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+    //         count++;
+    //         verticies[count++] = glm::normalize(normals[x][z+1]);
+    //         verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+    //         count++;
+    //         verticies[count++] = glm::normalize(normals[x+1][z]);
+    //         verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+    //         count++;
+    //         verticies[count++] = glm::normalize(normals[x+1][z]);
+    //         verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+    //         count++;
+    //         verticies[count++] = glm::normalize(normals[x][z+1]);
+    //         verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+    //         count++;
+    //         verticies[count++] = glm::normalize(normals[x+1][z+1]);
+    //         verticies[count++] = getColor(verticies[count-3].y, verticies[count-2].y);
+    //     }
+    // }
 
     glGenVertexArrays(1, &_VAO);
     glBindVertexArray(_VAO);
