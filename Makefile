@@ -1,4 +1,4 @@
-CC=g++ -g
+CC=g++ -g -pthread
 
 all: build/main.o build/groundGen.o build/shaders.o build/visualize.o build/chunk.o
 	$(CC) build/shaders.o build/groundGen.o build/chunk.o build/main.o build/visualize.o -lGL -lglfw -lGLEW -DGLEW_STATIC -Iheaders
