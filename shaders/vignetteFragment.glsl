@@ -6,9 +6,9 @@ out vec4 outColor;
 
 uniform sampler2D screen;
 
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
-const float WINDOW_CROSS = 1000.0;
+const int WINDOW_WIDTH = 2000;
+const int WINDOW_HEIGHT = 1600;
+const float WINDOW_CROSS = 2561.0;
 
 void main() {
 	float strength = 0;

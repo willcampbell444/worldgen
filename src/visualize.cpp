@@ -1,7 +1,7 @@
 #include <visualize.h>
 
-const int SCR_WIDTH = 800;
-const int SCR_HEIGHT = 600;
+const int SCR_WIDTH = 2000;
+const int SCR_HEIGHT = 1600;
 
 Visualize::Visualize() {
     glfwInit();
