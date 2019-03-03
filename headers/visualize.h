@@ -1,6 +1,8 @@
 #ifndef VISUALIZE_H
 #define VISUALIZE_H
 
+#include <list>
+#include <memory>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -12,17 +14,17 @@
 #include <random>
 #include <string>
 
-const float VIEW_DISTANCE = 200.0f;
+const float VIEW_DISTANCE = 500.0f;
 const int GRID_WIDTH = 13;
 
 class Visualize {
 public:
 	Visualize();
 	void draw();
-	void update();
+	void update(std::list<std::unique_ptr<Task>> &newTasks);
 	GLFWwindow* getWindow();
 private:
-    std::vector<std::vector<Chunk*>> _chunks;
+	ChunkGrid _chunkGrid;
 	glm::mat4 _proj, _view;
     glm::vec2 _cameraChunk;
     glm::vec3 _cameraPos;

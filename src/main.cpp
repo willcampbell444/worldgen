@@ -31,7 +31,8 @@ void RenderTask::execute() {
 }
 
 void UpdateTask::execute() {
-	m_visualize.update();
+	std::list<std::unique_ptr<Task>> nextTasks;
+	m_visualize.update(nextTasks);
 	std::unique_ptr<Task> renderTask = std::make_unique<RenderTask>(m_visualize);
 	runAfter(std::move(renderTask));
 }

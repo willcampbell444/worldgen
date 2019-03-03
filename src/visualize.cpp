@@ -158,12 +158,7 @@ Visualize::Visualize() {
 
     _cameraChunk = glm::vec2(0, 0);
     _gShader->use();
-    for (int x = -GRID_WIDTH/2; x <= GRID_WIDTH/2; x++) {
-        _chunks.push_back(std::vector<Chunk*>());
-        for (int z = -GRID_WIDTH/2; z <= GRID_WIDTH/2; z++) {
-            _chunks.back().push_back(new Chunk(x, z, &_ground));
-        }
-    }
+	_chunkGrid.fill(GRID_WIDTH, GRID_WIDTH, &_ground);
 
     float width = (GRID_WIDTH * CHUNK_WIDTH)/2.0f;
     float waterVert[18] = {
@@ -301,7 +296,7 @@ GLFWwindow* Visualize::getWindow() {
     return _window;
 }
 
-void Visualize::update() {
+void Visualize::update(std::list<std::unique_ptr<Task>> &nextTasks) {
     float deltaTime = glfwGetTime() - _lastTime;
     _lastTime = glfwGetTime();
 
@@ -345,65 +340,20 @@ void Visualize::update() {
     if (_cameraPos.x < 0) {
         _cameraPos.x = CHUNK_WIDTH;
         _cameraChunk.x -= 1;
-
-        for (int z = 0; z < GRID_WIDTH; z++) {
-            delete _chunks.back()[z];
-        }
-        for (int x = GRID_WIDTH-2; x >= 0; x--) {
-            for (int z = 0; z < GRID_WIDTH; z++) {
-                _chunks[x + 1][z] = _chunks[x][z];
-            }
-        }
-        for (int z = 0; z < GRID_WIDTH; z++) {
-            _chunks[0][z] = new Chunk(_cameraChunk.x - GRID_WIDTH/2, _cameraChunk.y + z - GRID_WIDTH/2, &_ground);
-        }
     } else if (_cameraPos.x > CHUNK_WIDTH) {
         _cameraPos.x = 0;
         _cameraChunk.x += 1;
-        for (int z = 0; z < GRID_WIDTH; z++) {
-            delete _chunks[0][z];
-        }
-        for (int x = 1; x < GRID_WIDTH; x++) {
-            for (int z = 0; z < GRID_WIDTH; z++) {
-                _chunks[x - 1][z] = _chunks[x][z];
-            }
-        }
-        for (int z = 0; z < GRID_WIDTH; z++) {
-            _chunks.back()[z] = new Chunk(_cameraChunk.x + GRID_WIDTH/2, _cameraChunk.y + z - GRID_WIDTH/2, &_ground);
-        }
     }
 
     if (_cameraPos.z < 0) {
         _cameraPos.z = CHUNK_WIDTH;
         _cameraChunk.y -= 1;
-
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            delete _chunks[x].back();
-        }
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            for (int z = GRID_WIDTH-2; z >= 0; z--) {
-                _chunks[x][z + 1] = _chunks[x][z];
-            }
-        }
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            _chunks[x][0] = new Chunk(_cameraChunk.x + x - GRID_WIDTH/2, _cameraChunk.y - GRID_WIDTH/2, &_ground);
-        }
     } else if (_cameraPos.z > CHUNK_WIDTH) {
         _cameraPos.z = 0;
         _cameraChunk.y += 1;
-
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            delete _chunks[x][0];
-        }
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            for (int z = 1; z < GRID_WIDTH; z++) {
-                _chunks[x][z - 1] = _chunks[x][z];
-            }
-        }
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            _chunks[x].back() = new Chunk(_cameraChunk.x + x - GRID_WIDTH/2, _cameraChunk.y + GRID_WIDTH/2, &_ground);
-        }
     }
+
+	_chunkGrid.shift(_cameraChunk, nextTasks, &_ground);
 
     _view = glm::lookAt(
         _cameraPos,
@@ -422,12 +372,12 @@ void Visualize::draw() {
     glUniformMatrix4fv(_gShader->getUniformLocation("projection"), 1, GL_FALSE, glm::value_ptr(_proj));
     glm::mat4 model;
 
-    for (int x = 0; x < _chunks.size(); x++) {
-        for (int z = 0; z < _chunks[x].size(); z++) {
+    for (int x = 0; x < _chunkGrid.grid.size(); x++) {
+        for (int z = 0; z < _chunkGrid.grid[x].size(); z++) {
             model = glm::translate(glm::mat4(1), glm::vec3((CHUNK_WIDTH - 1)*(x - GRID_WIDTH/2), 0, (CHUNK_WIDTH - 1)*(z - GRID_WIDTH/2)));
             glUniformMatrix4fv(_gShader->getUniformLocation("model"), 1, GL_FALSE, glm::value_ptr(model));
         
-            _chunks[x][z]->draw();
+            _chunkGrid.grid[x][z]->draw();
         }
     }
 
