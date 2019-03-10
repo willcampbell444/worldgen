@@ -35,6 +35,9 @@ void UpdateTask::execute() {
 	m_visualize.update(nextTasks);
 	std::unique_ptr<Task> renderTask = std::make_unique<RenderTask>(m_visualize);
 	runAfter(std::move(renderTask));
+	for (auto& task: nextTasks) {
+		runAfter(std::move(task));
+	}
 }
 
 bool running = true;

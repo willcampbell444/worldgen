@@ -25,20 +25,22 @@ private:
 	GLuint _VAO, _VBO;
 };
 
+class ShiftTask;
+
 class ChunkGrid {
-	std::mutex lock;
-	glm::vec2 _centerChunk;
+	friend class ShiftTask;
+
 	int _xWidth, _zWidth;
 
 public:
+	std::mutex lock;
+	glm::vec2 _centerChunk;
+	glm::vec2 _pendingCenter;
 	std::deque<std::deque<std::unique_ptr<Chunk>>> grid;
-
-	~ChunkGrid() {
-		std::cout << "bleep" << std::endl;
-	}
 
 	void fill(int xWidth, int zWidth, GroundGen *groundGen) {
 		_centerChunk = glm::vec2(0.f, 0.f);
+		_pendingCenter = _centerChunk;
 		std::lock_guard<std::mutex> l(lock);
 		_xWidth = xWidth;
 		_zWidth = zWidth;
@@ -55,7 +57,9 @@ public:
 		}
 	}
 
-	void shift(glm::vec2 newCenterChunk, std::list<std::unique_ptr<Task>> &newTasks, GroundGen *groundGen) {
+	void shift(glm::vec2 newCenterChunk, std::list<std::unique_ptr<Task>> &newTasks, GroundGen *groundGen);
+
+	void _shift(glm::vec2 newCenterChunk, GroundGen *groundGen) {
 		if (newCenterChunk != _centerChunk) {
 			const auto diff = newCenterChunk - _centerChunk;
 			_centerChunk = newCenterChunk;
@@ -111,6 +115,22 @@ public:
 					x++;
 				}
 			}
+		}
+	}
+};
+
+class ShiftTask: public Task {
+	ChunkGrid& _chunkGrid;
+	glm::vec2 _destination;
+	GroundGen* _groundGen;
+	
+public:
+	ShiftTask(ChunkGrid& g, glm::vec2 dest, GroundGen *gGen):
+		_chunkGrid(g), _destination(dest), _groundGen(gGen) { }
+	void execute() override {
+		std::unique_lock<std::mutex> l(_chunkGrid.lock, std::try_to_lock);
+		if (l.owns_lock()) {
+			_chunkGrid._shift(_destination, _groundGen);
 		}
 	}
 };

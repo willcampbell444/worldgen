@@ -258,3 +258,10 @@ void Chunk::draw() {
     glBindVertexArray(_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 2*3*(CHUNK_WIDTH-1)*(CHUNK_WIDTH-1));
 }
+
+void ChunkGrid::shift(glm::vec2 newCenterChunk, std::list<std::unique_ptr<Task>> &newTasks, GroundGen *groundGen) {
+	if (newCenterChunk != _pendingCenter) {
+		_pendingCenter = newCenterChunk;
+		newTasks.push_back(std::make_unique<ShiftTask>(*this, newCenterChunk, groundGen));
+	}
+}
